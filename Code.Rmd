@@ -547,6 +547,7 @@ ggplot(train.data, aes(PA, LBXCRP) ) +
 mod_lm <- gam(LBXCRP ~ PA, data=PA.c.protein)
 summary(mod_lm)
 ```
+
 ## Question 2: Are different levels of framingham scores the effect modifiers for this relationship between physical activity and C-protein? How do they modify the relationship?
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 mod_gam3 <- gam(LBXCRP ~ te(PA, risk), data=PA.c.protein)
