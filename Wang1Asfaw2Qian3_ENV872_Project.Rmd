@@ -1,0 +1,620 @@
+---
+output: 
+  pdf_document:
+    keep_tex: yes
+    fig_caption: yes
+    number_sections: yes
+    latex_engine: xelatex
+geometry: margin=2.54cm
+title: "Is Physical Activity Associated with C-protein Level in US Population with Different Framingham Risk Scores?"
+subtitle: "https://github.com/YinsuW/Wang1Asfaw2Qian3_ENV872_EDA_FinalProject.git"
+author: "Yinsu Wang, Yared Asfaw, April Qian"
+fontsize: 12pt
+mainfont: Times New Roman
+
+---
+
+\newpage
+\tableofcontents 
+\newpage
+\listoftables 
+\newpage
+\listoffigures 
+\newpage
+
+```{r setup, include=FALSE}
+# Set your working directory
+setwd("/Users/wangyinsu/Desktop/final\ project/data")
+# Load your packages
+library(tidyverse)
+library(ggplot2)
+library(foreign)
+library(data.table)
+library(naniar)
+library(tidyr)
+library(naniar)
+library(caret)
+library(mgcv)
+library(boot)
+library(table1)
+library(arsenal)
+library(magrittr)
+library(captioner)
+
+# Set your ggplot theme
+mytheme <- theme_classic() +
+  theme(axis.text = element_text(color = "black"), 
+        legend.position = "top")
+theme_set(mytheme)
+# Load your datasets
+rm(list=ls())
+temp = list.files(path = "/Users/wangyinsu/Desktop/final\ project/data", pattern="*.XPT")
+myfiles = lapply(temp, read.xport)
+PA.raw<-rbindlist(myfiles, use.names=TRUE, fill=TRUE)
+
+srvyin <- paste("1999_2000.dat") 
+srvyout <- "1999"
+dsn <- read_fwf(file=srvyin,
+                col_types = "ciiiiiiiddii",
+                fwf_cols(publicid = c(1,14),
+                         eligstat = c(15,15),
+                         mortstat = c(16,16),
+                         ucod_leading = c(17,19),
+                         diabetes = c(20,20),
+                         hyperten = c(21,21),
+                         dodqtr = c(22,22),
+                         dodyear = c(23,26),
+                         wgt_new = c(27,34),
+                         sa_wgt_new = c(35,42),
+                         permth_int = c(43,45),
+                         permth_exm = c(46,48)
+                ),
+                na = "."
+)
+dsn$seqn <- substr(dsn$publicid,1,5)
+dsn <- select(dsn, -publicid)
+dsn <- select(dsn, -dodqtr)
+dsn <- select(dsn, -dodyear)
+dsn <- select(dsn, -wgt_new)
+dsn <- select(dsn, -sa_wgt_new)
+str(dsn)
+table(dsn$eligstat)
+table(dsn$mortstat, useNA="ifany")
+table(dsn$ucod_leading, useNA="ifany")
+table(dsn$diabetes, useNA="ifany")
+table(dsn$hyperten, useNA="ifany")
+assign(paste0(srvyout), dsn)
+
+srvyin2 <- paste("2001_2002.dat")  
+srvyout2 <- "2001"
+dsn2 <- read_fwf(file=srvyin2,
+                col_types = "ciiiiiiiddii",
+                fwf_cols(publicid = c(1,14),
+                         eligstat = c(15,15),
+                         mortstat = c(16,16),
+                         ucod_leading = c(17,19),
+                         diabetes = c(20,20),
+                         hyperten = c(21,21),
+                         dodqtr = c(22,22),
+                         dodyear = c(23,26),
+                         wgt_new = c(27,34),
+                         sa_wgt_new = c(35,42),
+                         permth_int = c(43,45),
+                         permth_exm = c(46,48)
+                ),
+                na = "."
+)
+dsn2$seqn <- substr(dsn2$publicid,1,5)
+dsn2 <- select(dsn2, -publicid)
+dsn2 <- select(dsn2, -dodqtr)
+dsn2 <- select(dsn2, -dodyear)
+dsn2 <- select(dsn2, -wgt_new)
+dsn2 <- select(dsn2, -sa_wgt_new)
+str(dsn2)
+table(dsn2$eligstat)
+table(dsn2$mortstat, useNA="ifany")
+table(dsn2$ucod_leading, useNA="ifany")
+table(dsn2$diabetes, useNA="ifany")
+table(dsn2$hyperten, useNA="ifany")
+assign(paste0(srvyout2), dsn2)
+
+srvyin3 <- paste("2003_2004.dat")  
+srvyout3 <- "2003"
+dsn3 <- read_fwf(file=srvyin3,
+                col_types = "ciiiiiiiddii",
+                fwf_cols(publicid = c(1,14),
+                         eligstat = c(15,15),
+                         mortstat = c(16,16),
+                         ucod_leading = c(17,19),
+                         diabetes = c(20,20),
+                         hyperten = c(21,21),
+                         dodqtr = c(22,22),
+                         dodyear = c(23,26),
+                         wgt_new = c(27,34),
+                         sa_wgt_new = c(35,42),
+                         permth_int = c(43,45),
+                         permth_exm = c(46,48)
+                ),
+                na = "."
+)
+dsn3$seqn <- substr(dsn3$publicid,1,5)
+dsn3 <- select(dsn3, -publicid)
+dsn3 <- select(dsn3, -dodqtr)
+dsn3 <- select(dsn3, -dodyear)
+dsn3 <- select(dsn3, -wgt_new)
+dsn3 <- select(dsn3, -sa_wgt_new)
+str(dsn3)
+table(dsn3$eligstat)
+table(dsn3$mortstat, useNA="ifany")
+table(dsn3$ucod_leading, useNA="ifany")
+table(dsn3$diabetes, useNA="ifany")
+table(dsn3$hyperten, useNA="ifany")
+assign(paste0(srvyout3), dsn3)
+
+srvyin4 <- paste("2005_2006.dat")  
+srvyout4 <- "2005"
+dsn4 <- read_fwf(file=srvyin4,
+                col_types = "ciiiiiiiddii",
+                fwf_cols(publicid = c(1,14),
+                         eligstat = c(15,15),
+                         mortstat = c(16,16),
+                         ucod_leading = c(17,19),
+                         diabetes = c(20,20),
+                         hyperten = c(21,21),
+                         dodqtr = c(22,22),
+                         dodyear = c(23,26),
+                         wgt_new = c(27,34),
+                         sa_wgt_new = c(35,42),
+                         permth_int = c(43,45),
+                         permth_exm = c(46,48)
+                ),
+                na = "."
+)
+dsn4$seqn <- substr(dsn4$publicid,1,5)
+dsn4 <- select(dsn4, -publicid)
+dsn4 <- select(dsn4, -dodqtr)
+dsn4 <- select(dsn4, -dodyear)
+dsn4 <- select(dsn4, -wgt_new)
+dsn4 <- select(dsn4, -sa_wgt_new)
+str(dsn4)
+table(dsn4$eligstat)
+table(dsn4$mortstat, useNA="ifany")
+table(dsn4$ucod_leading, useNA="ifany")
+table(dsn4$diabetes, useNA="ifany")
+table(dsn4$hyperten, useNA="ifany")
+assign(paste0(srvyout4), dsn4)
+
+srvyin5 <- paste("2007_2008.dat")  
+srvyout5 <- "2007"
+dsn5 <- read_fwf(file=srvyin5,
+                col_types = "ciiiiiiiddii",
+                fwf_cols(publicid = c(1,14),
+                         eligstat = c(15,15),
+                         mortstat = c(16,16),
+                         ucod_leading = c(17,19),
+                         diabetes = c(20,20),
+                         hyperten = c(21,21),
+                         dodqtr = c(22,22),
+                         dodyear = c(23,26),
+                         wgt_new = c(27,34),
+                         sa_wgt_new = c(35,42),
+                         permth_int = c(43,45),
+                         permth_exm = c(46,48)
+                ),
+                na = "."
+)
+dsn5$seqn <- substr(dsn5$publicid,1,5)
+dsn5 <- select(dsn5, -publicid)
+dsn5 <- select(dsn5, -dodqtr)
+dsn5 <- select(dsn5, -dodyear)
+dsn5 <- select(dsn5, -wgt_new)
+dsn5 <- select(dsn5, -sa_wgt_new)
+str(dsn5)
+table(dsn5$eligstat)
+table(dsn5$mortstat, useNA="ifany")
+table(dsn5$ucod_leading, useNA="ifany")
+table(dsn5$diabetes, useNA="ifany")
+table(dsn5$hyperten, useNA="ifany")
+assign(paste0(srvyout5), dsn5)
+
+srvyin6 <- paste("2009_2010.dat")  
+srvyout6 <- "2009"
+dsn6 <- read_fwf(file=srvyin6,
+                col_types = "ciiiiiiiddii",
+                fwf_cols(publicid = c(1,14),
+                         eligstat = c(15,15),
+                         mortstat = c(16,16),
+                         ucod_leading = c(17,19),
+                         diabetes = c(20,20),
+                         hyperten = c(21,21),
+                         dodqtr = c(22,22),
+                         dodyear = c(23,26),
+                         wgt_new = c(27,34),
+                         sa_wgt_new = c(35,42),
+                         permth_int = c(43,45),
+                         permth_exm = c(46,48)
+                ),
+                na = "."
+)
+dsn6$seqn <- substr(dsn6$publicid,1,5)
+dsn6 <- select(dsn6, -publicid)
+dsn6 <- select(dsn6, -dodqtr)
+dsn6 <- select(dsn6, -dodyear)
+dsn6 <- select(dsn6, -wgt_new)
+dsn6 <- select(dsn6, -sa_wgt_new)
+str(dsn6)
+table(dsn6$eligstat)
+table(dsn6$mortstat, useNA="ifany")
+table(dsn6$ucod_leading, useNA="ifany")
+table(dsn6$diabetes, useNA="ifany")
+table(dsn6$hyperten, useNA="ifany")
+assign(paste0(srvyout6), dsn6)
+
+CVD <-rbind(dsn, dsn2,dsn3,dsn4,dsn5,dsn6)
+CVD<-rename(CVD, SEQN = seqn)
+
+nhanes<-merge(CVD,PA.raw)
+```
+
+
+# Rationale and Research Questions
+Cardiovascular disease (CVD) is the leading cause of death in the United States. About 659,000 people in the United States died from CVD each year (Centers for Disease Control and Prevention, 2022). The formulation of coagulation is the fundamental pathophysiological mechanisms behind CVD. Studies have shown that coagulation biomarkers such as protein-C may be regarded as potential CVD risk factors, thus its level might be related to the risk of CVD (Zakai et tal, 2018). The Framingham risk score is a gender-specific algorithm used to estimate the ten-year cardiovascular risk of a person. The higher the score is, the higher the risk will be. Therefore, it can be treated as a parameter reflecting the risk of CVD. Physical activity (PA) is a widely accepted approach both by European Society of Cardiology and American Heart Association guidelines on CVD treatment (Arnett et al, 2019; Visseren et al, 2021). However, little is known whether PA would reduce the coagulation process, therefore reducing the risk of CVD. Thus, in this study, we used NHANES dataset to explore the relationship between PA and protein-C, one of the biomarkers of coagulation, under different Framingham risk score, aiming to find whether PA would be related to reduced protein-C level in individuals with high Framingham risk scores. 
+
+* Question 1: Is physical activity associated with the level of C-protein? If so, what is the exact relationship? Is it dose-response? 
+* Question 2: Are different levels of framingham risk scores the effect modifiers for this relationship between physical activity and C-protein? How do they modify the relationship?
+
+\newpage
+
+# Dataset Information
+The dataset used for this project is obtained from the National Health and Nutrition Examination Survey (NHNES) which were conducted on a periodic basis from 1999 to 2010 by the National Center for Health Statistics, Division of Health Examination Statistics, part of the Centers for Disease Control and Prevention. The survey conducted between the year 1999 to 2010 every year by interviewing on average 10,360 individuals of all ages in their homes (9,965 (1999-2000), 11,039 (2001- 2002), 10,122 (2003-2004), 10,348 (2005-2006), 10,149 (2007-2008), 10,537 (2009-2010) individuals of all ages). The data were collected between January of the beginning year and December of the ending year). The data is available for public at https://www.cdc.gov/nchs/nhanes.htm.
+
+The major objectives of the survey as indicated in the CDC website are:
+
+1. To estimate the number and percent of persons in the U.S. population and designated subgroups with selected diseases and risk factors;
+2. To monitor trends in the prevalence, awareness, treatment and control of selected diseases;
+3. To monitor trends in risk behaviors and environmental exposures;
+4. To analyze risk factors for selected diseases;
+5. To study the relationship between diet, nutrition and health;
+6. To explore emerging public health issues and new technologies;
+7. To establish a national probability sample of genetic material for future genetic research; 
+8. To establish and maintain a national probability sample of baseline information on health and nutritional status.
+
+The survey has demographic, dietary, medical examination, laboratory, questionnaire, and limited access data categories. The target population for this survey is the civilian, noninstitutionalized U.S. population which includes over-sampling of low-income persons, adolescents 12-19 years, persons 60+ years of age, African Americans, and Mexican Americans.
+For this project the data categories that the team selected for the analysis are demographic data, examination data, laboratory data and questionnaire data. The examination component consists of medical, dental, and physiological measurements, as well as laboratory tests of participants. The dataset will be used to investigate the relationship between physical exercise or activity and C-protein level (to explain the behavior of reactive C-protein in response to physical activity) in patients that have different levels of Framingham scores.
+
+Detail information on data collection procedures, household interview data collection procedures, sources of the questions, questionnaire target populations, health examination component, MEC operations, second day examinations and dietary interviews, home examinations, sample person demographics file and guidelines for data users is available at https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/overview.aspx?BeginYear=1999. 
+
+In the process of data wrangling, we first included participants whose ages were equal or above 20 years using NHANES datasets from 1999 to 2010. We then excluded participants whose cholesterol (HDL, TC), blood pressure, diabetes, PA status, race, education level, family PIR, BMI, age and gender were missing. Finally, a total of 1079 participants were included in the analyses. 
+
+
+\newpage
+
+# Exploratory Analysis 
+The analysis takes into consideration of the main characteristics of the participants which might have an effect on their level of C-protein concentration in the presence and absence of physical activity. These participants characteristics considered in the analysis are age, gender, ethnicity, education levels, family PIR, systolic blood pressure, direct HDL-Cholesterol, total cholesterol, and body mass index. The proportion of participants in terms of those categories of characteristics/information is indicated in Table 1 below.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+##Data wrangling
+
+nhanes1<-subset(nhanes,select = c("SEQN",'RIDAGEYR','LBDHDDSI','LBDTCSI','BPQ040A','SMQ040','DIQ010','PAQ605','PAQ610','PAD615','PAQ620','PAQ625','PAD630','PAQ635','PAQ640','PAD645','RIDRETH1','DMDEDUC2','INDFMPIR','BMXBMI','LBXCRP','ucod_leading',"BPXSY1","BPXSY2","BPXSY3","RIAGENDR"))
+nhanes1<-setDT(nhanes1)[, lapply(.SD, na.omit), by = SEQN]
+nhanes1<-unique(nhanes1)
+
+nhanes1<-nhanes1 %>% replace_with_na(replace = list(PAQ605 = 9))%>% 
+  replace_with_na(replace = list(PAQ610 = 99))%>% 
+  replace_with_na(replace = list(PAD615 = 9999))%>% 
+  replace_with_na(replace = list(PAQ620 = 9))%>% 
+  replace_with_na(replace = list(PAQ625 = 99))%>% 
+  replace_with_na(replace = list(PAD630 = 9999))%>% 
+  replace_with_na(replace = list(PAQ635 = 9))%>% 
+  replace_with_na(replace = list(PAQ640 = 99))%>% 
+  replace_with_na(replace = list(PAD645 = 9999))
+nhanes1<-nhanes1 %>% replace_with_na(replace = list(PAQ605 = 7))%>% 
+  replace_with_na(replace = list(PAQ610 = 77))%>% 
+  replace_with_na(replace = list(PAD615 = 7777))%>% 
+  replace_with_na(replace = list(PAQ620 = 7))%>% 
+  replace_with_na(replace = list(PAQ625 = 77))%>% 
+  replace_with_na(replace = list(PAD630 = 7777))%>% 
+  replace_with_na(replace = list(PAQ635 = 7))%>% 
+  replace_with_na(replace = list(PAQ640 = 77))%>% 
+  replace_with_na(replace = list(PAD645 = 7777))
+nhanes1<-nhanes1[!is.na(PAQ605)|!is.na(PAQ620)|is.na(PAQ635)]
+nhanes1<-nhanes1%>%mutate(vigorous = (nhanes1$PAD615)*(nhanes1$PAQ610)*8)%>%
+  mutate(moderate_walk = (nhanes1$PAD645)*(nhanes1$PAQ640)*4)%>%
+  mutate(moderate_activity = (nhanes1$PAQ625)*(nhanes1$PAD630)*4)
+nhanes1<-subset(nhanes1,is.na(moderate_activity)==FALSE | is.na(moderate_walk)==FALSE | is.na(vigorous)==FALSE)
+
+nhanes1 <- nhanes1 %>% mutate(SBP = 
+                            case_when(BPXSY1>0&is.na(BPXSY2)&is.na(BPXSY3) ~ BPXSY1,
+                                      BPXSY1>0&BPXSY2>0&is.na(BPXSY3) ~ BPXSY2,
+                                      BPXSY1>0&BPXSY2>0&BPXSY3>0 ~ (BPXSY2+BPXSY3)/2))
+
+nhanes2<-nhanes1[complete.cases(nhanes1[,c('RIDAGEYR','LBDHDDSI','LBDTCSI','SMQ040','DIQ010','SBP')]),]
+nhanes2=filter(filter(filter(filter(filter(filter(nhanes2,SMQ040 != 7),SMQ040 != 9),DIQ010 != 7),DIQ010 != 9),BPQ040A !=7),BPQ040A!=9)
+nhanes2=filter(nhanes2,RIDAGEYR>=20)
+
+nhanes21<-subset(nhanes2,select = c("SEQN",'RIDAGEYR','LBDHDDSI','LBDTCSI','BPQ040A','SMQ040','DIQ010','PAQ605','PAQ610','PAD615','PAQ620','PAQ625','PAD630','PAQ635','PAQ640','PAD645','RIDRETH1','DMDEDUC2','INDFMPIR','BMXBMI','LBXCRP','ucod_leading',"BPXSY1","BPXSY2","BPXSY3","RIAGENDR","vigorous","SBP"))
+nhanes21<-rename(nhanes21, PA = vigorous)
+
+nhanes22<-subset(nhanes2,select = c("SEQN",'RIDAGEYR','LBDHDDSI','LBDTCSI','BPQ040A','SMQ040','DIQ010','PAQ605','PAQ610','PAD615','PAQ620','PAQ625','PAD630','PAQ635','PAQ640','PAD645','RIDRETH1','DMDEDUC2','INDFMPIR','BMXBMI','LBXCRP','ucod_leading',"BPXSY1","BPXSY2","BPXSY3","RIAGENDR","moderate_activity","SBP"))
+nhanes22<-rename(nhanes22, PA = moderate_activity)
+nhanes23<-subset(nhanes2,select = c("SEQN",'RIDAGEYR','LBDHDDSI','LBDTCSI','BPQ040A','SMQ040','DIQ010','PAQ605','PAQ610','PAD615','PAQ620','PAQ625','PAD630','PAQ635','PAQ640','PAD645','RIDRETH1','DMDEDUC2','INDFMPIR','BMXBMI','LBXCRP','ucod_leading',"BPXSY1","BPXSY2","BPXSY3","RIAGENDR","moderate_walk","SBP"))
+nhanes23<-rename(nhanes23, PA = moderate_walk)
+nhanes3<-rbind(nhanes21,nhanes22,nhanes23)
+nhanes3<-nhanes3[!is.na(nhanes3$PA)]
+
+# framingham score
+if (nhanes3$RIAGENDR==1){nhanes3<-nhanes3%>%mutate(score_Age = 
+  case_when  
+           ((nhanes3$RIDAGEYR >=30) & (nhanes3$RIDAGEYR<=34) ~ 0,
+            (nhanes3$RIDAGEYR >=35) & (nhanes3$RIDAGEYR <=39) ~2,
+            (RIDAGEYR >=40) & (RIDAGEYR <=44) ~5,
+            (RIDAGEYR >=45) & (RIDAGEYR <=49) ~7,
+            (RIDAGEYR >=50) & (RIDAGEYR <=54) ~8,
+            (RIDAGEYR >=55) & (RIDAGEYR <=59) ~10,
+            (RIDAGEYR >=60) & (RIDAGEYR <=64) ~11,
+            (RIDAGEYR >=65) & (RIDAGEYR <=69) ~12,
+            (RIDAGEYR >=70) & (RIDAGEYR <=74) ~14,
+            (RIDAGEYR >=75) ~15))}else{nhanes3%>%mutate(score_Age = 
+  case_when  
+  ((RIDAGEYR >=30) & (RIDAGEYR <=34) ~ 0,
+            (RIDAGEYR >=35) & (RIDAGEYR <=39) ~2,
+            (RIDAGEYR >=40) & (RIDAGEYR <=44) ~4,
+            (RIDAGEYR >=45) & (RIDAGEYR <=49) ~5,
+            (RIDAGEYR >=50) & (RIDAGEYR <=54) ~7,
+            (RIDAGEYR >=55) & (RIDAGEYR <=59) ~8,
+            (RIDAGEYR >=60) & (RIDAGEYR <=64) ~9,
+            (RIDAGEYR >=65) & (RIDAGEYR <=69) ~10,
+            (RIDAGEYR >=70) & (RIDAGEYR <=74) ~11,
+            (RIDAGEYR >=75) ~12))}
+
+if (nhanes3$RIAGENDR==1){nhanes3<-nhanes3%>%mutate(score_HDL = 
+    case_when((nhanes3$LBDHDDSI>1.6) ~ -2,
+              (nhanes3$LBDHDDSI>=1.3) & (nhanes3$LBDHDDSI <=1.6) ~ -1,
+              (nhanes3$LBDHDDSI>=1.2) & (nhanes3$LBDHDDSI <=1.29) ~ 0,
+              (nhanes3$LBDHDDSI>=0.9) & (nhanes3$LBDHDDSI <=1.19) ~ 1,
+              (nhanes3$LBDHDDSI<0.9) ~ 2))}else{nhanes3<-nhanes3%>%mutate(score_HDL = 
+    case_when((nhanes3$LBDHDDSI>1.6) ~ -2,
+              (nhanes3$LBDHDDSI>=1.3) & (nhanes3$LBDHDDSI <=1.6) ~ -1,
+              (nhanes3$LBDHDDSI>=1.2) & (nhanes3$LBDHDDSI <=1.29) ~ 0,
+              (nhanes3$LBDHDDSI>=0.9) & (nhanes3$LBDHDDSI <=1.19) ~ 1,
+              (nhanes3$LBDHDDSI<0.9) ~ 2))}
+if (nhanes3$RIAGENDR==1){nhanes3<-nhanes3%>%mutate(score_TC = 
+    case_when((nhanes3$LBDTCSI>7.2) ~ 4,
+              (nhanes3$LBDTCSI>=6.2) & (nhanes3$LBDTCSI <=7.2) ~ 3,
+              (nhanes3$LBDTCSI>=5.2) & (nhanes3$LBDTCSI <=6.19) ~ 2,
+              (nhanes3$LBDTCSI>=4.1) & (nhanes3$LBDTCSI <=5.19) ~ 1,
+              (nhanes3$LBDTCSI<4.1) ~ 0))}else{nhanes3<-nhanes3%>%mutate(score_TC = 
+    case_when((nhanes3$LBDTCSI>7.2) ~ 5,
+              (nhanes3$LBDTCSI>=6.2) & (nhanes3$LBDTCSI <=7.2) ~ 4,
+              (nhanes3$LBDTCSI>=5.2) & (nhanes3$LBDTCSI <=6.19) ~ 3,
+              (nhanes3$LBDTCSI>=4.1) & (nhanes3$LBDTCSI <=5.19) ~ 1,
+              (nhanes3$LBDTCSI<4.1) ~ 0))}
+
+if (nhanes3$RIAGENDR==1){nhanes3<-nhanes3%>%mutate(score_BP = 
+   if(nhanes3$BPQ040A==1) {case_when((nhanes3$SBP>160) ~ 5,
+              (nhanes3$SBP>=150) & (nhanes3$SBP <=159) ~ 4,
+              (nhanes3$SBP>=140) & (nhanes3$SBP <=149) ~ 4,
+              (nhanes3$SBP>=130) & (nhanes3$SBP <=139) ~ 3,
+              (nhanes3$SBP>=120) & (nhanes3$SBP <=129) ~ 2,
+              (nhanes3$SBP<120) ~ 0)}else
+   if(nhanes3$BPQ040A==2) {case_when((nhanes3$SBP>160) ~ 3,
+              (nhanes3$SBP>=150) & (nhanes3$SBP <=159) ~ 2,
+              (nhanes3$SBP>=140) & (nhanes3$SBP <=149) ~ 2,
+              (nhanes3$SBP>=130) & (nhanes3$SBP <=139) ~ 1,
+              (nhanes3$SBP>=120) & (nhanes3$SBP <=129) ~ 0,
+              (nhanes3$SBP<120) ~ -2)})}else{nhanes3<-nhanes3%>%mutate(score_BP = 
+   if(nhanes3$BPQ040A==1) {case_when((nhanes3$SBP>160) ~ 7,
+              (nhanes3$SBP>=150) & (nhanes3$SBP <=159) ~ 6,
+              (nhanes3$SBP>=140) & (nhanes3$SBP <=149) ~ 5,
+              (nhanes3$SBP>=130) & (nhanes3$SBP <=139) ~ 3,
+              (nhanes3$SBP>=120) & (nhanes3$SBP <=129) ~ 2,
+              (nhanes3$SBP<120) ~ -1)}else
+   if(nhanes3$BPQ040A==2) {case_when((nhanes3$SBP>160) ~ 5,
+              (nhanes3$SBP>=150) & (nhanes3$SBP <=159) ~ 4,
+              (nhanes3$SBP>=140) & (nhanes3$SBP <=149) ~ 2,
+              (nhanes3$SBP>=130) & (nhanes3$SBP <=139) ~ 1,
+              (nhanes3$SBP>=120) & (nhanes3$SBP <=129) ~ 0,
+              (nhanes3$SBP<120) ~ -3)})}
+
+   if(nhanes3$RIAGENDR==2){nhanes3<-nhanes3%>%mutate(score_Smoke =
+                               case_when((nhanes3$SMQ040==1) ~ 3,
+                                         (nhanes3$SMQ040==2) ~ 3,
+                                         (nhanes3$SMQ040==3) ~ 0))}else
+                                         {nhanes3<-nhanes3%>%mutate(score_Smoke =
+                               case_when((nhanes3$SMQ040==1) ~ 4,
+                                         (nhanes3$SMQ040==2) ~ 4,
+                                         (nhanes3$SMQ040==3) ~ 0))}
+   if(nhanes3$RIAGENDR==2){nhanes3<-nhanes3%>%mutate(score_Diabetes =
+                               case_when((nhanes3$SMQ040==1) ~ 4,
+                                         (nhanes3$SMQ040==2) ~ 4,
+                                         (nhanes3$SMQ040==3) ~ 0))}else
+                                         {nhanes3<-nhanes3%>%mutate(score_Diabetes =
+                               case_when((nhanes3$SMQ040==1) ~ 3,
+                                         (nhanes3$SMQ040==2) ~ 3,
+                                         (nhanes3$SMQ040==3) ~ 0))}
+nhanes3<-nhanes3%>%mutate(score=score_Age+score_BP+score_HDL+score_TC+score_Smoke+score_Diabetes)
+
+   if(nhanes3$RIAGENDR==1){nhanes3<-nhanes3%>%mutate(risk =
+                               case_when((nhanes3$score <= -3) ~ 1,
+                                         (nhanes3$score==-2) ~ 1.1,
+                                         (nhanes3$score==-1) ~ 1.4,
+                                         (nhanes3$score==0) ~ 1.6,
+                                         (nhanes3$score==1) ~ 1.9,
+                                         (nhanes3$score==2) ~ 2.3,
+                                         (nhanes3$score==3) ~ 2.8,
+                                         (nhanes3$score==4) ~ 3.3,
+                                         (nhanes3$score==5) ~ 3.9,
+                                         (nhanes3$score==6) ~ 4.7,
+                                         (nhanes3$score==7) ~ 5.6,
+                                         (nhanes3$score==8) ~ 6.7,
+                                         (nhanes3$score==9) ~ 7.9,
+                                         (nhanes3$score==10) ~ 9.4,
+                                         (nhanes3$score==11) ~ 11.2,
+                                         (nhanes3$score==12) ~ 13.3,
+                                         (nhanes3$score==13) ~ 15.6,
+                                         (nhanes3$score==14) ~ 18.4,
+                                         (nhanes3$score==15) ~ 21.6,
+                                         (nhanes3$score==16) ~ 25.3,
+                                         (nhanes3$score==17) ~ 29.4,
+                                         (nhanes3$score==18) ~ 30,
+                                         (nhanes3$score==19) ~ 30,
+                                         (nhanes3$score==20) ~ 30,
+                                         (nhanes3$score>=21) ~ 30,))}else
+                                         {nhanes3<-nhanes3%>%mutate(risk =
+                               case_when((nhanes3$score <= -3) ~ 1,
+                                         (nhanes3$score==-2) ~ 1,
+                                         (nhanes3$score==-1) ~ 1,
+                                         (nhanes3$score==0) ~ 1.2,
+                                         (nhanes3$score==1) ~ 1.5,
+                                         (nhanes3$score==2) ~ 1.7,
+                                         (nhanes3$score==3) ~ 2.0,
+                                         (nhanes3$score==4) ~ 2.4,
+                                         (nhanes3$score==5) ~ 2.8,
+                                         (nhanes3$score==6) ~ 3.3,
+                                         (nhanes3$score==7) ~ 3.9,
+                                         (nhanes3$score==8) ~ 4.5,
+                                         (nhanes3$score==9) ~ 5.3,
+                                         (nhanes3$score==10) ~ 6.3,
+                                         (nhanes3$score==11) ~ 7.3,
+                                         (nhanes3$score==12) ~ 8.6,
+                                         (nhanes3$score==13) ~ 10.0,
+                                         (nhanes3$score==14) ~ 11.7,
+                                         (nhanes3$score==15) ~ 13.7,
+                                         (nhanes3$score==16) ~ 15.9,
+                                         (nhanes3$score==17) ~ 18.51,
+                                         (nhanes3$score==18) ~ 21.5,
+                                         (nhanes3$score==19) ~ 24.8,
+                                         (nhanes3$score==20) ~ 27.5,
+                                         (nhanes3$score>=21) ~ 30,))}
+
+#risk_level definition
+if (nhanes3$RIAGENDR==1){nhanes3<-nhanes3%>%mutate(risk_level = 
+  case_when  
+           ((risk <=10) ~ "low",
+            (risk >10) & (risk <=14) ~"intermediate",
+            (risk >14) ~"high"))}else{nhanes3%>%mutate(risk_level = 
+  case_when  
+  ((risk <=12) ~ "low",
+            (risk >12) & (risk <=17) ~"intermediate",
+            (risk >17) ~"high"))}
+
+#PA_level definition
+nhanes3<-nhanes3%>%mutate(PA_level = 
+  case_when  
+           ((PA <=150) ~ "low",
+            (PA >150) & (PA <=1118) ~"intermediate",
+            (PA >1118) ~"high"))
+
+nhanes3<-nhanes3[!is.na(nhanes3$score)]
+hanes3<-nhanes3[!is.na(nhanes3$risk)]
+PA.c.protein<-nhanes3[!is.na(nhanes3$risk_level)]
+PA.c.protein<-PA.c.protein[!is.na(PA.c.protein$INDFMPIR)]
+PA.c.protein<-PA.c.protein[!is.na(PA.c.protein$BMXBMI)]
+```
+
+## Table 1 Baseline Characteristics of Participants
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+PA.c.protein = PA.c.protein %>%mutate(gender = case_when(RIAGENDR==1 ~ 'Male', RIAGENDR==2 ~ 'Female'))
+PA.c.protein = PA.c.protein %>%mutate(age = case_when(RIDAGEYR>=60 ~ 'Elder', RIDAGEYR<=59&RIDAGEYR>=40 ~ 'Middle Aged',RIDAGEYR<=39&RIDAGEYR>=20 ~ 'Young'))
+PA.c.protein = PA.c.protein %>%mutate(familyPIR = case_when(INDFMPIR>=0&INDFMPIR<1 ~ '0≤PIR<1', INDFMPIR>=1&INDFMPIR<2 ~ '1≤PIR<2',INDFMPIR>=2&INDFMPIR<3~'2≤PIR<3',INDFMPIR>=3~'PIR ≥3'))
+PA.c.protein = PA.c.protein %>%mutate(race = case_when(RIDRETH1==3 ~ 'Non-Hispanic White', RIDRETH1==4 ~ 'Non-Hispanic Black',(RIDRETH1==1) |(RIDRETH1==2)~'Hispanic',RIDRETH1==5~'Other'))
+PA.c.protein = PA.c.protein %>%mutate(education = case_when(DMDEDUC2 <=2 ~ 'Below high school', DMDEDUC2==3 ~ 'High school',(DMDEDUC2==4) |(DMDEDUC2==5)~'College or above'))
+
+label(PA.c.protein$age) <- "Age"
+label(PA.c.protein$gender) <- "Gender"
+label(PA.c.protein$race) <- "Ethnicity"
+label(PA.c.protein$education) <- "Education"
+label(PA.c.protein$familyPIR) <- "Family PIR"
+label(PA.c.protein$SBP) <- "Systolic Blood Pressure (mmHg)"
+label(PA.c.protein$LBDHDDSI) <- "Direct HDL-Cholesterol (mmol/L)"
+label(PA.c.protein$LBDTCSI) <- "Total Cholesterol (mmol/L)"
+label(PA.c.protein$BMXBMI) <- "Body Mass Index (kg/m2)"
+
+table1(~age + gender+ race + education + familyPIR + SBP + LBDHDDSI + LBDTCSI + BMXBMI, data=PA.c.protein, overall="Total", caption = "Baseline Characteristics of Participants")
+
+```
+
+The project team conducted an explanatory analysis of the dataset by plotting a scatter plot to show the response of C-protein concentration at different physical activity levels (Figure 1). To meaningfully capture and investigate the relationship in the scatter plot, log transformation of the data made (Figure 2). Similarly, the team produced a heatmap of physical activity and C-protein concentrations to demonstrate the level of C-protein concentrations at different levels of physical activity under different Framingham Risk Scores (Figure 3). 
+
+## Scatterplot of the relationship between PA and C-protein
+```{r echo=FALSE, message=FALSE, warning=FALSE,fig.cap="The relationship between Physical Activity and C-protein Concentration"}
+PA.c.protein.plot<-ggplot(PA.c.protein,aes(x=PA,y=LBXCRP))+
+  geom_point()+
+  labs(x="Physical Activity (MET*Mins)",y="C-protein Concentration (mg/dL)")
+print(PA.c.protein.plot)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE,fig.cap="The relationship between Physical Activity and C-protein Concentration (Log-transformed)"}
+PA.c.protein$PA<-log(PA.c.protein$PA)
+PA.c.protein$LBXCRP<-log(PA.c.protein$LBXCRP)
+PA.c.protein.plot<-ggplot(PA.c.protein,aes(x=PA,y=LBXCRP))+
+  geom_point()+
+  labs(x="Physical Activity (MET*Mins)",y="C-protein Concentration (mg/dL)")
+print(PA.c.protein.plot)
+```
+
+## Heatmap of PA and C-protein under different Framingham risk scores
+```{r echo=FALSE, message=FALSE, warning=FALSE,fig.cap="C-protein Levels under Physical Activity Status and Framingham Risk Scores (Log-transformed)"}
+ggplot(PA.c.protein, aes(risk_level,PA, z = LBXCRP)) +
+  stat_summary_2d()  +
+  viridis::scale_fill_viridis()+
+  labs(x="Framingham risk scores",y="Physical Activity (MET*Mins)")+ 
+  guides(fill=guide_legend(title="C-protein (mg/dL)"))
+```
+
+
+\newpage
+
+# Analysis
+
+## Question 1: Is physical activity associated with the level of C-protein? If so, what is the exact relationship? Is it dose-response? 
+
+-	Methods:
+We used the linear regression method to build up our model. First, after we plotted the relationship between PA and C-protein level with raw data, we found that most data positioned at the left bottom of the plot (Figure 1), suggesting that we need to take log transformation of our PA and C-protein variables. We, therefore, used the transferred data for further analysis. For the analysis, we first conducted a crude model using the “lm” function to see whether there was linear association between PA and C-protein level. We then adjusted gender and age to see whether this association changed or not. Finally, we conducted a linear model by adjusting multiple variables including gender, age, family PIR, education level, ethnicity, diabetes history, blood pressure, total cholesterol together with direct HDL-cholesterol to see whether there are significant association between the two variables. 
+
+-	Results:
+In the crude model, PA shows no significant association with C-protein (F(1164)= 3.425; p-value: 0.06449, Figure 4). We then conducted the gender- and age-adjusted model for this relationship. In this adjusted model, we saw a relationship between gender and C-protein (F (1162) = 8.311; p-value: 1.802e-05) but not the association between PA and C-protein (p-value: 0.123). Finally, in the adjusted model of multiple variables, we still did not see a positive relationship between PA and C-protein (F(1066) = 24.24; p-value: 0.075685). 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.cap="C-protein Level under Different Physical Activity Status (Log-transformed)"}
+PA.protein.lm.1<-lm(LBXCRP ~ PA,data = PA.c.protein)
+PA.protein.lm.2<-lm(LBXCRP ~ PA+RIDAGEYR+RIAGENDR,data = PA.c.protein)
+PA.protein.lm.3<-lm(LBXCRP ~ PA+RIDAGEYR+RIAGENDR+LBDHDDSI+LBDTCSI+SBP+SMQ040+DIQ010+RIDRETH1+DMDEDUC2+INDFMPIR+BMXBMI,data = PA.c.protein)
+ggplot(PA.c.protein,aes(y=LBXCRP,x=PA))+
+  geom_point()+
+  geom_smooth(method  = "lm")+
+  labs(x='Physical Activity (MET*Mins)',y="C-protein Level (mg/dL)")
+```
+
+## Question 2: Are different levels of framingham risk scores the effect modifiers for this relationship between physical activity and C-protein? How do they modify the relationship?
+
+-	Methods:
+We then conducted an analysis to identify whether different levels of Framingham risk scores modify the effect for the relationship between physical activity and C-protein by “lm” function. We first added an interaction term “PA*risk_level” to the previous crude linear model. We then added the same interaction term to the gender- and age-adjusted model. 
+
+-	Results: 
+The results shows that there no interaction between PA and Framingham risk scores (F-statistic: 1.175 on 5 and 1160 DF, p-value: 0.3191, Figure 5) in the crude model. In the adjusted model, we also found no interaction between PA and Framingham risk scores, suggesting that Framingham risk scores may not be an effect modifier for the relationship between PA and C-protein. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE,fig.cap="C-protein Level under Differen PA Status by Different Framingham Risk Scores (Log-tranformed)"}
+PA.protein.interaction<-lm(LBXCRP ~ PA+PA*risk_level,data = PA.c.protein)
+PA.protein.interaction<-lm(LBXCRP ~ PA++RIDAGEYR+RIAGENDR+PA*risk_level,data = PA.c.protein)
+ggplot(PA.c.protein,aes(y=LBXCRP,x=PA,color=risk_level))+
+  geom_point()+
+  geom_smooth(method  = "lm")+
+  labs(x='Physical Activity (MET*Mins)',y="C-protein Level (mg/dL)",color="Framingham Risk Score Levels")
+```
+\newpage
+
+# Summary and Conclusions
+Our analyses of the NHANES datasets suggest that there might not be a positive association between PA and C-protein level, with and without under different Framingham risk scores for population of the United States, even adjusted by gender and age, as well as other potential confounders such as ethnicity, education level, diabetes history, blood pressure and lipids. This might suggest that the relationship might not be exist. Previous studies demonstrated that low C-protein is a risk factor for venous thrombosis, but less is known whether it is also a risk factor for arterial disease such as CVD (Folsom et al, 2009). Previous studies also suggested that C-protein might not be an independent risk factor for CVD, in which case, PA might not be moderate the level of C-protein for people with high CVD level (high Framingham risk score)  (Folsom et al, 2009). These results are congruent with ours. However, these analyses have their limitations. First, the processed data sample is relatively small, having only more than one thousand samples, which might cause random error of the results. Second, we used only linear model to conduct the analyses, potentially making this model not fit very well. The best value of R-squared is just more than 20% in the models, making it less confident to draw a strong conclusion using this linear model. Third, the study design is cross-sectional, which might not be validate. Further studies could be conducted using more complicated way of analyses such as using machine learning to establish a non-linear model to figure out the better model for this relationship between PA and C-protein. Studies such as cohort studies may also be required to seek for a potential positive result. 
+
+\newpage
+
+# References
+Arnett, D. K., Blumenthal, R. S., Albert, M. A., Buroker, A. B., Goldberger, Z. D., Hahn, E. J., Himmelfarb, C. D., Khera, A., Lloyd-Jones, D., McEvoy, J. W., Michos, E. D., Miedema, M. D., Muñoz, D., Smith, S. C., Jr, Virani, S. S., Williams, K. A., Sr, Yeboah, J., & Ziaeian, B. (2019). 2019 ACC/AHA Guideline on the Primary Prevention of Cardiovascular Disease: A Report of the American College of Cardiology/American Heart Association Task Force on Clinical Practice Guidelines. Journal of the American College of Cardiology, 74(10), e177–e232. https://doi.org/10.1016/j.jacc.2019.03.010
+
+Folsom, A. R., Ohira, T., Yamagishi, K., & Cushman, M. (2009). Low protein C and incidence of ischemic stroke and coronary heart disease: the Atherosclerosis Risk in Communities (ARIC) Study. Journal of thrombosis and haemostasis : JTH, 7(11), 1774–1778. https://doi.org/10.1111/j.1538-7836.2009.03577.x
+
+Visseren, F., Mach, F., Smulders, Y. M., Carballo, D., Koskinas, K. C., Bäck, M., Benetos, A., Biffi, A., Boavida, J. M., Capodanno, D., Cosyns, B., Crawford, C., Davos, C. H., Desormais, I., Di Angelantonio, E., Franco, O. H., Halvorsen, S., Hobbs, F., Hollander, M., Jankowska, E. A., … ESC Scientific Document Group (2021). 2021 ESC Guidelines on cardiovascular disease prevention in clinical practice. European heart journal, 42(34), 3227–3337. https://doi.org/10.1093/eurheartj/ehab484
+
+Zakai, N. A., Judd, S. E., Kissela, B., Howard, G., Safford, M. M., & Cushman, M. (2018). Factor VIII, Protein C and Cardiovascular Disease Risk: The REasons for Geographic and Racial Differences in Stroke Study (REGARDS). Thrombosis and haemostasis, 118(7), 1305–1315. https://doi.org/10.1055/s-0038-1655766
+
+
